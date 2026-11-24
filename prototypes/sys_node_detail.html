@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>节点详情 - 应龙大模型推理平台</title>
+  <title>主机详情 - 应龙大模型推理平台</title>
   <link rel="stylesheet" href="assets/css/yinglong-v2.css">
-  <link rel="stylesheet" href="assets/css/pages/sys_node_detail.css">
+  <link rel="stylesheet" href="assets/css/pages/sys_node_detail.css?v=20261124-docker-host-6">
   <link rel="stylesheet" href="assets/css/theme.css">
   <script src="assets/js/theme.js"></script>
   <link rel="stylesheet" href="assets/css/prototype-v4.css?v=20260906-sidebar-version">
@@ -25,6 +25,9 @@
     <symbol id="i-network" viewBox="0 0 24 24"><rect width="6" height="6" x="9" y="2" rx="1"/><rect width="6" height="6" x="2" y="16" rx="1"/><rect width="6" height="6" x="16" y="16" rx="1"/><path d="M12 8v4m-7 4v-2h14v2"/></symbol>
     <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="19" r="3"/><path d="M9 19h5.5a3.5 3.5 0 0 0 0-7h-5a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></symbol>
     <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/><path d="M9 12h10"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
     <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
     <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
   </svg>
@@ -36,30 +39,30 @@
       <section class="nav-group"><h2 class="nav-group-title">工作台</h2><a class="nav-item" href="../index.html"><svg class="icon"><use href="#i-dashboard"/></svg><span>系统概览</span></a></section>
       <section class="nav-group"><h2 class="nav-group-title">算力调度</h2><a class="nav-item" href="sys_dispatch.html"><svg class="icon"><use href="#i-sliders"/></svg><span>算力调度</span></a><a class="nav-item" href="sys_task_list.html"><svg class="icon"><use href="#i-list"/></svg><span>密钥管理</span></a></section>
       <section class="nav-group"><h2 class="nav-group-title">模型管理</h2><a class="nav-item" href="sys_model_repo.html"><svg class="icon"><use href="#i-box"/></svg><span>模型资产</span></a><a class="nav-item" href="sys_model_service.html"><svg class="icon"><use href="#i-server"/></svg><span>模型服务</span></a><a class="nav-item" href="sys_model_training.html"><svg class="icon"><use href="#i-brain"/></svg><span>模型训练</span></a><a class="nav-item" href="sys_model_monitor.html"><svg class="icon"><use href="#i-activity"/></svg><span>模型监测</span></a></section>
-      <section class="nav-group"><h2 class="nav-group-title">资源与运维</h2><a class="nav-item" href="sys_resource_application.html"><svg class="icon"><use href="#i-file"/></svg><span>资源申请</span></a><a class="nav-item" href="sys_resource_approval.html"><svg class="icon"><use href="#i-check-user"/></svg><span>授权审批</span></a><a class="nav-item active" href="sys_infrastructure_mgmt.html" aria-current="page"><svg class="icon"><use href="#i-network"/></svg><span>集群管理</span></a></section>
+      <section class="nav-group"><h2 class="nav-group-title">资源与运维</h2><a class="nav-item" href="sys_resource_application.html"><svg class="icon"><use href="#i-file"/></svg><span>资源申请</span></a><a class="nav-item" href="sys_resource_approval.html"><svg class="icon"><use href="#i-check-user"/></svg><span>授权审批</span></a><a class="nav-item active" href="sys_infrastructure_mgmt.html" aria-current="page"><svg class="icon"><use href="#i-network"/></svg><span>集群与主机</span></a></section>
     </nav>
   <div class="sidebar-foot"><div class="sidebar-version" tabindex="0" aria-describedby="sidebarVersionDetails"><span>系统版本</span><strong>v1.0.0</strong><span class="sidebar-version-popover" id="sidebarVersionDetails" role="tooltip"><strong>版本信息</strong><span><span>前端版本</span><b>v1.0.0</b></span><span><span>后端版本</span><b>v1.0.0</b></span></span></div></div>
   </aside>
 
   <div class="app-main">
     <header class="global-header">
-      <nav class="breadcrumb" aria-label="面包屑"><a href="../index.html">应龙</a><span>/</span><span>资源与运维</span><span>/</span><a href="sys_infrastructure_mgmt.html">集群管理</a><span>/</span><span class="breadcrumb-current" aria-current="page">节点详情</span></nav>
+      <nav class="breadcrumb" aria-label="面包屑"><a href="../index.html">应龙</a><span>/</span><span>资源与运维</span><span>/</span><a href="sys_infrastructure_mgmt.html" id="breadcrumbBack">集群管理</a><span>/</span><span class="breadcrumb-current" aria-current="page" id="breadcrumbCurrent">节点详情</span></nav>
       <div class="user-profile"><span>资源管理员</span><span class="user-avatar" aria-hidden="true">A</span></div>
     </header>
 
     <main class="page-canvas heading-spec-canvas" id="main-content">
       <section class="section node-heading" aria-labelledby="nodeDetailTitle">
         <div class="section-heading overview-heading">
-          <div><h1 class="page-title" id="nodeDetailTitle">node-01</h1><p class="page-description"><span class="mono">192.168.1.101</span> · 生产环境集群 A </p></div>
-          <div class="toolbar-actions"><span class="badge badge-success"><span class="status-dot"></span>在线</span><a class="btn" href="sys_infrastructure_mgmt.html"><svg class="icon icon-sm"><use href="#i-arrow-left"/></svg>返回集群管理</a></div>
+          <div><h1 class="page-title" id="nodeDetailTitle">node-01</h1><p class="page-description" id="nodeDescription"><span class="mono">192.168.1.101</span> · 生产环境集群 A</p></div>
+          <div class="toolbar-actions"><span class="badge badge-success" id="nodeStatusBadge"><span class="status-dot"></span>在线</span><a class="btn" href="sys_infrastructure_mgmt.html" id="backButton"><svg class="icon icon-sm"><use href="#i-arrow-left"/></svg>返回集群管理</a></div>
         </div>
       </section>
 
       <section class="card node-overview" aria-label="节点运行概览">
         <div class="node-identity">
           <span class="identity-label">加速卡型号</span>
-          <strong>NVIDIA A100</strong>
-          
+          <strong id="nodeAccelerator">NVIDIA A100</strong>
+          <span class="identity-meta" id="nodeIdentityMeta">8 卡 · 当前节点</span>
         </div>
         <article class="node-stat"><span>GPU 容量</span><strong><em>2</em> / 8</strong><small>可用 / 总数</small></article>
         <article class="node-stat attention" id="nodeGpuUtilization"><span>GPU 利用率</span><strong>64%</strong><small>当前资源水位</small></article>
@@ -69,19 +72,21 @@
       <section class="node-detail-workspace">
         <div class="node-tabs" role="tablist" aria-label="节点详情视图">
           <button class="node-tab active" id="tabInstances" type="button" role="tab" aria-selected="true" aria-controls="panelInstances" onclick="switchTab('instances')">实例运行情况</button>
-          <button class="node-tab" id="tabEvents" type="button" role="tab" aria-selected="false" aria-controls="panelEvents" onclick="switchTab('events')">节点事件</button>
+          <button class="node-tab" id="tabEvents" type="button" role="tab" aria-selected="false" aria-controls="panelEvents" onclick="switchTab('events')" aria-labelledby="tabEventsLabel"><span id="tabEventsLabel">节点事件</span></button>
         </div>
 
         <section class="tab-panel" id="panelInstances" role="tabpanel" aria-labelledby="tabInstances">
           <div class="card table-card">
-            <div class="table-toolbar"><div class="table-title"><h2>运行实例</h2></div><span class="result-count">共 <strong>2</strong> 项</span></div>
-            <div class="table-scroll"><table><thead><tr><th>Pod 名称</th><th>所属服务</th><th>状态</th></tr></thead><tbody><tr><td class="mono cell-title">pod-qwen-72b-wx92</td><td>svc-qwen-72b-prod</td><td><span class="badge badge-success">运行中</span></td></tr><tr><td class="mono cell-title">pod-qwen-72b-ab12</td><td>svc-qwen-72b-prod</td><td><span class="badge badge-success">运行中</span></td></tr></tbody></table></div>
+            <div class="table-toolbar"><div class="table-title"><h2 id="instancesTitle">运行实例</h2></div><span class="result-count" id="instanceCount">共 <strong>2</strong> 项</span></div>
+            <div class="table-scroll"><table><thead id="instanceHead"><tr><th>Pod 名称</th><th>所属服务</th><th>状态</th></tr></thead><tbody id="instanceBody"></tbody></table></div>
           </div>
         </section>
 
+
+
         <section class="tab-panel hidden" id="panelEvents" role="tabpanel" aria-labelledby="tabEvents">
           <div class="card table-card">
-            <div class="table-toolbar"><div class="table-title"><h2>系统事件日志</h2></div><div class="toolbar-actions"><span class="result-count" id="eventCount">共 3 条事件</span><div class="search-wrap"><svg class="icon"><use href="#i-search"/></svg><input class="search-input" id="eventSearch" maxlength="50" aria-label="搜索节点事件" placeholder="搜索事件名称、详情或原因" oninput="filterEvents()"><button class="search-clear hidden" id="eventSearchClear" type="button" aria-label="清除事件搜索" onclick="clearEventSearch()"><svg class="icon icon-sm"><use href="#i-x"/></svg></button></div></div></div>
+            <div class="table-toolbar"><div class="table-title"><h2 id="eventsTitle">系统事件日志</h2></div><div class="toolbar-actions"><span class="result-count" id="eventCount">共 3 条事件</span><div class="search-wrap"><svg class="icon"><use href="#i-search"/></svg><input class="search-input" id="eventSearch" maxlength="50" aria-label="搜索节点事件" placeholder="搜索事件名称、详情或原因" oninput="filterEvents()"><button class="search-clear hidden" id="eventSearchClear" type="button" aria-label="清除事件搜索" onclick="clearEventSearch()"><svg class="icon icon-sm"><use href="#i-x"/></svg></button></div></div></div>
             <div class="table-scroll"><table><thead><tr><th>事件名称</th><th>类型</th><th>时间</th><th>详情</th><th>原因</th><th>来源</th></tr></thead><tbody id="eventRows"><tr data-search="node ready system checks passed gpu drivers initialized nodestartup kubelet"><td class="cell-title">Node Ready</td><td><span class="badge badge-neutral">正常</span></td><td>今天 10:23:45</td><td>系统检查通过，GPU 驱动初始化完成。</td><td class="mono">NodeStartup</td><td class="mono">kubelet</td></tr><tr data-search="high temp gpu temperature fan speed temperaturethresholdexceeded nvidia-dcgm"><td class="cell-title">High Temp</td><td><span class="badge badge-warning">警告</span></td><td>昨天 14:00:12</td><td>GPU #3 温度达到 82°C，风扇已自动提速。</td><td class="mono">TemperatureThresholdExceeded</td><td class="mono">nvidia-dcgm</td></tr><tr data-search="net failure connection master timed out networktimeout cni-plugin"><td class="cell-title">Net Failure</td><td><span class="badge badge-danger">异常</span></td><td>昨天 12:00:00</td><td>连接 Master 节点超时。</td><td class="mono">NetworkTimeout</td><td class="mono">cni-plugin</td></tr></tbody></table></div>
             <div class="empty-state hidden" id="eventEmpty"><strong>没有匹配的节点事件</strong><span>请调整关键词后重新搜索。</span></div>
           </div>
@@ -90,15 +95,26 @@
     </main>
   </div>
 
+  <div class="toast hidden" id="toast" role="status" aria-live="polite"><svg class="icon"><use href="#i-check"/></svg><div><h3 id="toastTitle">操作成功</h3><p id="toastMessage"></p></div></div>
   <script>
+    const params=new URLSearchParams(location.search);
+    const isDocker=params.get('runtime')==='docker';
+    let lastTrigger=null;
+    function openModal(id){lastTrigger=document.activeElement;document.getElementById(id).classList.remove('hidden');document.body.style.overflow='hidden';requestAnimationFrame(()=>document.getElementById(id).querySelector('input,select,button')?.focus())}
+    function closeModal(id){document.getElementById(id).classList.add('hidden');document.body.style.overflow='';if(lastTrigger)lastTrigger.focus()}
+    function showToast(title,message,error=false){toastTitle.textContent=title;toastMessage.textContent=message;toast.classList.toggle('error',error);toast.classList.remove('hidden');clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>toast.classList.add('hidden'),3200)}
+    const dockerInstances=[
+      ['qwen3-32b-prod-01','svc-qwen3-32b-prod','running','192.168.10.21:8001','0, 1'],
+      ['deepseek-r1-docker','svc-deepseek-docker','running','192.168.10.21:8002','2, 3'],
+      ['rerank-bge','svc-rerank-bge','stopped','—','—']
+    ];
+    function renderDockerMode(){const host=params.get('host')||'h1';const name=host==='h2'?'推理主机-02':host==='h3'?'测试主机-03':'推理主机-01';const ip=params.get('ip')||'192.168.10.21';document.title='主机详情 - 应龙大模型推理平台';breadcrumbBack.textContent='集群与主机';breadcrumbBack.href='sys_infrastructure_mgmt.html#docker';breadcrumbCurrent.textContent='主机详情';nodeDetailTitle.textContent=name;nodeDescription.innerHTML=`<span class="mono">${ip}</span> · Docker 主机 · Docker 24.0.7`;nodeAccelerator.textContent='NVIDIA A100';nodeIdentityMeta.textContent='8 卡 · Docker 主机';backButton.innerHTML='<svg class="icon icon-sm"><use href="#i-arrow-left"/></svg>返回集群与主机';backButton.href='sys_infrastructure_mgmt.html#docker';document.querySelector('.node-overview').classList.add('docker-mode');document.getElementById('nodeGpuUtilization').id='hostGpuUtilization';document.querySelectorAll('#hostGpuUtilization .yl-v4-scope-badge').forEach(b=>b.remove());tabEvents.classList.add('hidden');instancesTitle.textContent='运行实例';instanceHead.innerHTML='<tr><th>实例名称</th><th>所属服务</th><th>状态</th><th>访问地址</th><th>占用卡</th></tr>';renderInstances()}
+    function renderInstances(){instanceBody.innerHTML=(isDocker?dockerInstances:[['pod-qwen-72b-wx92','svc-qwen-72b-prod','running'],['pod-qwen-72b-ab12','svc-qwen-72b-prod','running']]).map(r=>{const badge=r[2]==='running'?'<span class="badge badge-success">运行中</span>':'<span class="badge badge-neutral">已停止</span>';if(!isDocker)return `<tr><td class="mono cell-title">${r[0]}</td><td>${r[1]}</td><td>${badge}</td></tr>`;return `<tr><td class="mono cell-title">${r[0]}</td><td>${r[1]}</td><td>${badge}</td><td class="mono">${r[3]}</td><td class="mono">${r[4]}</td></tr>`}).join('');instanceCount.innerHTML=`共 <strong>${isDocker?dockerInstances.length:2}</strong> 项`}
+    document.querySelectorAll('.modal-backdrop').forEach(x=>x.addEventListener('click',e=>{if(e.target===x)closeModal(x.id)}));document.addEventListener('keydown',e=>{if(e.key==='Escape'){const x=document.querySelector('.modal-backdrop:not(.hidden)');if(x)closeModal(x.id)}});
+    if(isDocker)renderDockerMode();else renderInstances();
+    const tabMap={instances:['tabInstances','panelInstances'],events:['tabEvents','panelEvents']};
     function switchTab(tab) {
-      const instances = tab === 'instances';
-      tabInstances.classList.toggle('active', instances);
-      tabEvents.classList.toggle('active', !instances);
-      tabInstances.setAttribute('aria-selected', String(instances));
-      tabEvents.setAttribute('aria-selected', String(!instances));
-      panelInstances.classList.toggle('hidden', !instances);
-      panelEvents.classList.toggle('hidden', instances);
+      Object.entries(tabMap).forEach(([key,[tabId,panelId]])=>{const on=key===tab;const t=document.getElementById(tabId),p=document.getElementById(panelId);t.classList.toggle('active',on);t.setAttribute('aria-selected',String(on));p.classList.toggle('hidden',!on)});
     }
 
     function filterEvents() {

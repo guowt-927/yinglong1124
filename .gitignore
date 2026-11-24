@@ -1,0 +1,18 @@
+# ---- IDE / AI 工具临时目录 ----
+.acl-recovery/
+.codex_tmp_*/
+.codex_tmp_*.json
+output/
+tmp/
+prototypes/.offline-test.html
+
+# ---- Office 锁文件 ----
+~$*
+*.tmp
+
+# ---- 系统 / 编辑器 ----
+Thumbs.db
+Desktop.ini
+.DS_Store
+.vscode/
+.idea/

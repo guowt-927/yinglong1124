@@ -248,6 +248,24 @@
 .deploy-yaml-editor { display: block; width: 100%; height: 320px !important; min-height: 320px !important; margin: 0; padding: 14px !important; overflow: auto; border: 0 !important; border-radius: 0 !important; color: #dbeafe !important; background: #0f172a !important; box-shadow: none !important; font: 11px/1.65 var(--font-mono) !important; tab-size: 2; resize: vertical; white-space: pre; }
 
 .table-card { overflow: hidden; }
+.service-source-tabs { display: flex; gap: 4px; padding: 6px 14px 0; border-bottom: 1px solid var(--border-soft); background: #fbfdff; overflow-x: auto; }
+.service-source-tab { display: inline-flex; min-height: 42px; align-items: center; gap: 7px; padding: 0 14px; border: 0; border-bottom: 2px solid transparent; border-radius: 4px 4px 0 0; color: var(--muted); background: transparent; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer; transition: color .15s ease-out, border-color .15s ease-out, background-color .15s ease-out; }
+.service-source-tab:hover { color: var(--ink); background: #f1f5f9; }
+.service-source-tab:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; }
+.service-source-tab.active { border-bottom-color: var(--brand); color: var(--brand); font-weight: 700; }
+.service-source-tab span { min-width: 18px; padding: 1px 6px; border-radius: 999px; color: var(--muted); background: #eef2f7; font: 650 10px/16px var(--font-mono); }
+.service-source-tab.active span { color: var(--brand); background: var(--brand-soft); }
+.register-intro strong { display: block; margin-bottom: 3px; color: #78350f; }
+.register-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.register-modal .form-field .control { width: 100%; }
+.register-endpoint-row { display: flex; width: 100%; align-items: flex-start; gap: 10px; }
+.register-endpoint-row .deploy-control-stack { flex: 1; min-width: 0; }
+.register-endpoint-row .btn { flex: 0 0 auto; margin-top: 1px; white-space: nowrap; }
+.register-test-result { margin: 8px 0 0; }
+.register-test-result.success { color: var(--success); font-weight: 650; }
+.service-table.registered-view th:nth-child(3), .service-table.registered-view td:nth-child(3),
+.service-table.registered-view th:nth-child(5), .service-table.registered-view td:nth-child(5) { display: none; }
+@media (max-width: 700px) { .register-form-grid { grid-template-columns: 1fr; } .register-endpoint-row { flex-direction: column; align-items: stretch; } .register-endpoint-row .btn { width: 100%; } }
 .table-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 14px; border-bottom: 1px solid var(--border-soft); }
 .table-title h2 { margin: 0; color: var(--ink); font-size: 14px; font-weight: 700; }
 .table-title p { margin: 3px 0 0; color: var(--muted); font-size: 11px; }
@@ -459,3 +477,11 @@
 @media (prefers-reduced-motion: reduce) {
   .dataset-quality-spinner { animation: none; }
 }
+/* ---- 2026-11 Docker 主机部署 ---- */
+.deploy-runtime-row{display:grid!important;grid-template-columns:120px auto minmax(0,1fr);align-items:center;gap:12px}.deploy-runtime-segment{display:inline-flex;padding:3px;border:1px solid var(--border);border-radius:7px;background:#f8fafc}.deploy-runtime-segment label{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:5px;color:var(--muted);font-size:12px;cursor:pointer}.deploy-runtime-segment label:has(input:checked){color:var(--brand);background:#fff;box-shadow:var(--shadow-xs);font-weight:600}.deploy-runtime-segment input{accent-color:var(--brand)}.deploy-target-select{min-width:0}
+.deploy-capability-note{display:grid;gap:3px;margin:2px 0 12px;padding:10px 12px;border:1px solid #bae6fd;border-radius:7px;background:#f0f9ff;color:#0c4a6e;font-size:12px;line-height:1.6}.deploy-capability-note strong{color:#075985;font-size:12px}
+.deploy-steps{display:grid;gap:10px;margin:0;padding:0;list-style:none}.deploy-step{display:grid;grid-template-columns:22px minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border-soft);border-radius:8px;background:#fff}.deploy-step i{width:20px;height:20px;border-radius:50%;border:2px solid #e2e8f0}.deploy-step strong{display:block;color:var(--ink);font-size:13px}.deploy-step span{display:block;color:var(--muted);font:11px/1.5 var(--font-mono);word-break:break-all}.deploy-step em{color:var(--muted);font-size:11px;font-style:normal}.deploy-step.active{border-color:var(--brand)}.deploy-step.active i{border-color:var(--brand);border-top-color:transparent;animation:deploy-spin .8s linear infinite}.deploy-step.done i{border-color:var(--success);background:var(--success)}.deploy-step.done em{color:var(--success)}@keyframes deploy-spin{to{transform:rotate(360deg)}}.deploy-progress-log{margin-top:12px;padding:8px 10px;border-radius:6px;background:#0f172a;color:#cbd5e1;font:11px/1.6 var(--font-mono);min-height:32px}.deploy-progress-modal .modal-header p{margin:4px 0 0;color:var(--muted);font-size:11px}
+@media(max-width:700px){.deploy-runtime-row{grid-template-columns:1fr}}
+/* ---- 服务列表：运行环境列 ---- */
+.runtime-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border:1px solid var(--border-soft);border-radius:12px;font-size:11px;font-weight:600;white-space:nowrap}.runtime-pill .icon{width:12px;height:12px}.runtime-pill.k8s{color:#4338ca;background:#eef2ff;border-color:#c7d2fe}.runtime-pill.docker{color:#0e7490;background:#ecfeff;border-color:#a5f3fc}
+.deploy-progress-modal{width:min(560px,100%);display:flex;flex-direction:column}.deploy-progress-modal .modal-header{display:flex;align-items:flex-start;justify-content:space-between;width:100%;padding:16px 20px 12px;border-bottom:1px solid var(--border-soft)}.deploy-progress-modal .modal-header h2{margin:0;font-size:15px}.deploy-progress-modal .modal-body{display:block;width:100%;padding:16px 20px;overflow:visible}.deploy-progress-modal .modal-footer{display:flex;align-items:center;justify-content:space-between;width:100%;padding:12px 20px 16px;border-top:1px solid var(--border-soft)}

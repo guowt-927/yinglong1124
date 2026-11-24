@@ -108,7 +108,7 @@
     ['资源与运维', [
       ['application', 'file', '资源申请', pageHref('sys_resource_application.html')],
       ['approval', 'usercheck', '授权审批', pageHref('sys_resource_approval.html')],
-      ['infrastructure', 'network', '集群管理', pageHref('sys_infrastructure_mgmt.html')],
+      ['infrastructure', 'network', '集群与主机', pageHref('sys_infrastructure_mgmt.html')],
       ['tracing', 'route', '链路追踪', pageHref('sys_request_tracing.html')]
     ]]
   ];

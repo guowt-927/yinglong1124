@@ -6,10 +6,10 @@
   <meta name="description" content="应龙 AI 算力基座系统概览">
   <title>系统概览｜应龙 AI 算力基座</title>
   <link rel="icon" href="prototypes/icon/logo.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="prototypes/assets/css/pages/system-overview.css?v=20260906-alert-modal-layout">
+  <link rel="stylesheet" href="prototypes/assets/css/pages/system-overview.css?v=20261124-docker-host-5">
   <link rel="stylesheet" href="prototypes/assets/css/prototype-v4.css?v=20260906-sidebar-version">
   <script defer src="prototypes/assets/js/prototype-v4.js?v=20260906-sidebar-version"></script>
-  <script defer src="prototypes/assets/js/system-overview.js?v=20260906-alert-modal-layout"></script>
+  <script defer src="prototypes/assets/js/system-overview.js?v=20261124-docker-host-5"></script>
 </head>
 <body>
   <svg class="svg-sprite" aria-hidden="true">
@@ -34,8 +34,8 @@
 
         <section class="overview-hero" aria-label="核心指标">
           <div class="metric-grid">
-            <article class="metric"><div><strong>42</strong><small>台</small></div><span>在线节点</span><em class="down">异常 1</em></article>
-            <article class="metric"><div><strong>61</strong><small>卡</small></div><span>空闲 GPU / NPU</span></article>
+            <article class="metric metric-runtime"><div><strong>45</strong><small>台</small></div><span>在线节点 / 主机</span><div class="metric-breakdown"><span class="rt-k8s"><i></i>K8s 节点 42</span><span class="rt-docker"><i></i>Docker 主机 3</span></div><em class="down">异常 1 · 离线 1</em></article>
+            <article class="metric"><div><strong>61</strong><small>卡</small></div><span>空闲 GPU / NPU</span><em class="metric-sub">含 Docker 主机 8 卡</em></article>
             <article class="metric"><div><strong>18</strong><small>个</small></div><span>运行中模型</span></article>
           </div>
           <div class="qps-grid">
@@ -49,15 +49,15 @@
           <svg><use href="#icon-alert"/></svg>
           <strong>当前有 2 项运行预警</strong>
           <span class="alert-divider"></span>
-          <span class="alert-label">节点异常</span><b>gpu-node-23</b><span>节点掉卡</span><strong class="alert-value">18min</strong>
+          <span class="alert-item"><span class="alert-label">节点异常</span><b>gpu-node-23</b><span>节点掉卡</span><strong class="alert-value">18min</strong></span>
           <span class="alert-divider"></span>
-          <span class="alert-label warning-label">SLA预警</span><b>qwen3-32b</b><span>失败率超过 2%</span><strong class="alert-value">2.84%</strong>
-          <button id="ruleBtn" type="button">预警规则配置 <svg><use href="#icon-chevron"/></svg></button>
+          <span class="alert-item"><span class="alert-label warning-label">SLA预警</span><b>qwen3-32b</b><span>失败率超过 2%</span><strong class="alert-value">2.84%</strong></span>
+          <div class="alert-actions"><button id="historyBtn" class="alert-ghost-btn" type="button">历史预警</button><button id="ruleBtn" type="button">预警规则配置 <svg><use href="#icon-chevron"/></svg></button></div>
         </section>
       </section>
 
       <section class="dashboard-section resource-section">
-        <div class="section-title-row"><h2><i></i>显卡资源</h2><label>集群<select id="clusterSelect"><option>全部集群</option><option>生产集群 A</option><option>生产集群 B</option><option>测试集群</option></select></label></div>
+        <div class="section-title-row"><h2><i></i>显卡资源</h2><div class="resource-filters"><label>运行环境<select id="runtimeSelect"><option value="all">全部环境</option><option value="k8s">K8s 集群</option><option value="docker">Docker 主机</option></select></label><label><span id="clusterSelectLabel">集群 / 主机</span><select id="clusterSelect"><option value="all">全部</option><option data-runtime="k8s">生产集群 A</option><option data-runtime="k8s">生产集群 B</option><option data-runtime="k8s">测试集群</option><option data-runtime="docker">推理主机-01</option><option data-runtime="docker">推理主机-02</option><option data-runtime="docker">测试主机-03</option></select></label></div></div>
         <div class="section-card">
           <div class="resource-layout">
             <div class="gpu-list-shell">
@@ -81,7 +81,7 @@
               <div class="table-toolbar"><strong>卡级运行明细</strong><label>节点 IP<select id="nodeSelect"><option value="all">全部节点</option></select></label></div>
               <div class="table-scroll">
                 <table>
-                  <thead><tr><th>序号</th><th>唯一 ID</th><th>节点 IP</th><th>运行实例</th><th>GPU 利用率</th><th>显存占用率</th><th>功率</th></tr></thead>
+                  <thead><tr><th>序号</th><th>唯一 ID</th><th>节点 / 主机</th><th>运行环境</th><th>运行实例</th><th>GPU 利用率</th><th>显存占用率</th><th>功率</th></tr></thead>
                   <tbody id="gpuTableBody"></tbody>
                 </table>
               </div>
@@ -152,6 +152,7 @@
           </div>
         </section>
 
+
         <section class="rule-group rule-group-sla" aria-labelledby="slaRuleGroupTitle">
           <div class="rule-group-head">
             <h3 id="slaRuleGroupTitle"><i aria-hidden="true"></i>SLA预警</h3>
@@ -185,6 +186,21 @@
         <p class="rule-error" id="alertRuleError" role="alert" hidden>警告阈值必须大于 0。</p>
       </div>
       <footer class="rule-modal-footer"><button class="secondary-button" id="cancelModal" type="button">取消</button><button class="primary-button" id="saveRules" type="button">保存规则</button></footer>
+    </section>
+  </div>
+  <div class="modal-backdrop" id="historyModal" hidden>
+    <section class="modal history-modal" role="dialog" aria-modal="true" aria-labelledby="historyTitle">
+      <header>
+        <div><h2 id="historyTitle">历史预警</h2><p class="history-subtitle">最近 30 天内已触发的预警记录</p></div>
+        <button class="icon-button" id="closeHistory" type="button" aria-label="关闭历史预警"><svg><use href="#icon-close"/></svg></button>
+      </header>
+      <div class="history-table-wrap">
+        <table class="history-table">
+          <thead><tr><th>触发时间</th><th>级别</th><th>预警项</th><th>对象</th><th>详情</th></tr></thead>
+          <tbody id="historyBody"></tbody>
+        </table>
+      </div>
+      <footer class="history-footer"><span id="historyCount">共 0 条</span><div class="history-pager"><button class="secondary-button" id="historyPrev" type="button" disabled>上一页</button><span id="historyPage">1 / 1</span><button class="secondary-button" id="historyNext" type="button" disabled>下一页</button></div></footer>
     </section>
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>

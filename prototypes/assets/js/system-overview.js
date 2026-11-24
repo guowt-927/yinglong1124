@@ -1,5 +1,5 @@
 const gpuData = {
-  "NVIDIA A100": { vendor: "NVIDIA", total: 128, used: 120, hot: 7, nodes: ["192.168.1.101", "192.168.1.103"], base: 82 },
+  "NVIDIA A100": { vendor: "NVIDIA", total: 136, used: 123, hot: 8, nodes: ["192.168.1.101", "192.168.10.21", "192.168.1.103"], base: 82 },
   "NVIDIA A800": { vendor: "NVIDIA", total: 96, used: 72, hot: 4, nodes: ["192.168.2.111", "192.168.2.112"], base: 68 },
   "昇腾 910B3": { vendor: "华为", total: 64, used: 52, hot: 3, nodes: ["10.24.16.23", "10.24.16.24"], base: 74 }
 };
@@ -57,9 +57,11 @@ function buildRows(name) {
     const node = data.nodes[index % data.nodes.length];
     const gpu = Math.min(99, data.base + ((index * 7) % 18) - 6);
     const memory = Math.min(98, gpu + ((index * 3) % 9) - 3);
+    const runtime = /\.2[1-3]$/.test(node) ? "docker" : "k8s";
     return {
       id: `${name.includes("910") ? "910B" : name.split(" ")[1]}-SXM-${String(index + 1).padStart(3, "0")}`,
       node,
+      runtime,
       instance: index < 9 ? `${index % 2 ? "qwen2" : "qwen3"}-prod-${String((index % 3) + 1).padStart(2, "0")}` : "--",
       gpu, memory, power: 286 + ((index * 17) % 96)
     };
@@ -108,7 +110,8 @@ function renderGpuTable() {
   const allRows = buildRows(activeGpu);
   renderNodeOptions(allRows);
   const node = $("#nodeSelect").value;
-  const rows = allRows.filter(row => node === "all" || row.node === node);
+  const runtime = $("#runtimeSelect")?.value || "all";
+  const rows = allRows.filter(row => (node === "all" || row.node === node) && (runtime === "all" || row.runtime === runtime));
   $("#gpuTitle").textContent = activeGpu;
   $("#gpuTotal").textContent = `总计 ${data.total} 卡`;
   $("#gpuVendorIcon").src = `prototypes/assets/images/vendors/${data.vendor === "华为" ? "huawei" : "nvidia"}.svg`;
@@ -118,7 +121,7 @@ function renderGpuTable() {
   $("#idleCount").textContent = data.total - data.used;
   $("#hotCount").textContent = data.hot;
   $("#gpuTableBody").innerHTML = rows.slice(0, 5).map((row, index) => `
-    <tr><td>${index + 1}</td><td>${row.id}</td><td>${row.node}</td><td>${row.instance}</td>
+    <tr><td>${index + 1}</td><td>${row.id}</td><td>${row.node}</td><td><span class="runtime-pill ${row.runtime}">${row.runtime === "docker" ? "Docker" : "K8s"}</span></td><td>${row.instance}</td>
       <td><span class="usage"><i><b style="width:${row.gpu}%"></b></i><span>${row.gpu}%</span></span></td>
       <td><span class="usage memory"><i><b style="width:${row.memory}%"></b></i><span>${row.memory}%</span></span></td><td>${row.power} W</td></tr>`).join("");
   $("#rowCount").textContent = `共 ${rows.length} 条记录 · 第 1 / ${Math.max(1, Math.ceil(rows.length / 5))} 页`;
@@ -168,6 +171,48 @@ function renderModelRanking() {
     </div>`).join("");
   renderRankingPagination("#modelRankingPagination", ranking.rows.length, modelRankingPage);
 }
+
+/* ---- 历史预警 ---- */
+const historyAlerts = [
+  { time: "今天 11:42", level: "critical", rule: "节点心跳异常", target: "gpu-node-23", detail: "节点掉卡，心跳连续 10 分钟无响应", duration: "18 min", status: "恢复" },
+  { time: "今天 10:15", level: "warning", rule: "模型请求失败率", target: "qwen3-32b", detail: "5 分钟内请求失败率达到 2.84%，超过阈值 2%", duration: "26 min", status: "恢复" },
+  { time: "昨天 22:08", level: "critical", rule: "设备掉卡", target: "gpu-node-07", detail: "可用加速卡 6 张，低于阈值 8 张", duration: "1 h 12 min", status: "已确认" },
+  { time: "昨天 16:30", level: "warning", rule: "任务失败率", target: "eval-batch-20261123", detail: "评测任务失败率 3.1%，超过阈值 2%", duration: "42 min", status: "恢复" },
+  { time: "昨天 09:12", level: "critical", rule: "节点心跳异常", target: "gpu-node-15", detail: "节点网络抖动，心跳延迟超过阈值", duration: "9 min", status: "恢复" },
+  { time: "11 月 22 日 18:47", level: "warning", rule: "模型请求失败率", target: "deepseek-r1", detail: "上游超时导致失败率升至 2.5%", duration: "33 min", status: "恢复" },
+  { time: "11 月 22 日 03:20", level: "critical", rule: "设备掉卡", target: "gpu-node-23", detail: "GPU #3 掉卡，可用加速卡 7 张", duration: "2 h 05 min", status: "已确认" },
+  { time: "11 月 21 日 14:05", level: "warning", rule: "任务失败率", target: "finetune-job-8821", detail: "训练任务连续 3 次 checkpoint 失败", duration: "55 min", status: "恢复" },
+  { time: "11 月 20 日 08:31", level: "critical", rule: "节点心跳异常", target: "gpu-node-02", detail: "节点维护重启，心跳中断", duration: "14 min", status: "恢复" },
+  { time: "11 月 19 日 20:10", level: "warning", rule: "模型请求失败率", target: "bge-m3", detail: "向量化服务失败率 2.2%", duration: "19 min", status: "恢复" }
+];
+let historyPage = 1;
+const HISTORY_PAGE_SIZE = 6;
+function setHistoryModal(open) {
+  $("#historyModal").hidden = !open;
+  document.body.style.overflow = open ? "hidden" : "";
+  if (open) { historyPage = 1; renderHistory(); }
+}
+function renderHistory() {
+  const rows = historyAlerts;
+  const totalPages = Math.max(1, Math.ceil(rows.length / HISTORY_PAGE_SIZE));
+  if (historyPage > totalPages) historyPage = totalPages;
+  const start = (historyPage - 1) * HISTORY_PAGE_SIZE;
+  $("#historyBody").innerHTML = rows.slice(start, start + HISTORY_PAGE_SIZE).map(item => `
+    <tr><td class="mono">${item.time}</td><td><span class="alert-label ${item.level === "warning" ? "warning-label" : ""}">${item.level === "warning" ? "SLA预警" : "节点异常"}</span></td><td>${item.rule}</td><td class="mono">${item.target}</td><td class="history-detail">${item.detail}</td></tr>`).join("");
+  $("#historyCount").textContent = `共 ${rows.length} 条`;
+  $("#historyPage").textContent = `${historyPage} / ${totalPages}`;
+  $("#historyPrev").disabled = historyPage <= 1;
+  $("#historyNext").disabled = historyPage >= totalPages;
+}
+$("#historyBtn").addEventListener("click", () => setHistoryModal(true));
+$("#closeHistory").addEventListener("click", () => setHistoryModal(false));
+$("#historyModal").addEventListener("click", event => { if (event.target === $("#historyModal")) setHistoryModal(false); });
+$("#historyPrev").addEventListener("click", () => { historyPage -= 1; renderHistory(); });
+$("#historyNext").addEventListener("click", () => { historyPage += 1; renderHistory(); });
+document.addEventListener("keydown", event => {
+  if (event.key !== "Escape") return;
+  if (!$("#historyModal").hidden) setHistoryModal(false);
+});
 
 function setModal(open) {
   $("#ruleModal").hidden = !open;
@@ -285,6 +330,7 @@ $("#gpuScrollDown").addEventListener("click", () => scrollGpuList(1));
 window.addEventListener("resize", updateGpuScrollControls);
 
 $("#nodeSelect").addEventListener("change", renderGpuTable);
+$("#runtimeSelect")?.addEventListener("change", renderGpuTable);
 $("#modelSelect").addEventListener("change", () => {
   computeRankingPage = 1;
   renderRanking();
@@ -330,6 +376,25 @@ $("#computeRankingPagination").addEventListener("click", event => {
 });
 
 $("#clusterSelect").addEventListener("change", event => showToast(`已切换至${event.target.value}`));
+const clusterSelectLabel = $("#clusterSelectLabel");
+function syncClusterOptions() {
+  const runtime = $("#runtimeSelect")?.value || "all";
+  const select = $("#clusterSelect");
+  const previous = select.value;
+  let firstVisible = null;
+  [...select.options].forEach(option => {
+    const visible = runtime === "all" || !option.dataset.runtime || option.dataset.runtime === runtime;
+    option.hidden = !visible;
+    option.disabled = !visible;
+    if (visible && !firstVisible) firstVisible = option;
+  });
+  const current = select.options[select.selectedIndex];
+  if (!current || current.hidden || current.disabled) select.value = firstVisible.value;
+  if (clusterSelectLabel) clusterSelectLabel.textContent = runtime === "docker" ? "Docker 主机" : runtime === "k8s" ? "K8s 集群" : "集群 / 主机";
+  if (select.value !== previous) showToast(`已切换至${select.options[select.selectedIndex].textContent}`);
+}
+$("#runtimeSelect")?.addEventListener("change", event => { syncClusterOptions(); showToast(`已切换至${event.target.value === "docker" ? "Docker 主机" : event.target.value === "k8s" ? "K8s 集群" : "全部环境"}`); });
+syncClusterOptions();
 
 $("#ruleBtn").addEventListener("click", () => setModal(true));
 $("#closeModal").addEventListener("click", () => setModal(false));

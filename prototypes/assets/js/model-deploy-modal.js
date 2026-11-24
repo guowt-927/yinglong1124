@@ -8,6 +8,7 @@
     imageMode: 'path',
     imagePath: 'registry.yinglong.ai/inference/vllm:0.6.2-cuda12.1',
     imageRepository: 'registry.yinglong.ai/inference/vllm:0.6.2-cuda12.1',
+    runtime: 'k8s',
     cluster: '192.192.140.6',
     gpu: 'nvidia-l40s',
     nodeMode: 'auto',
@@ -84,26 +85,31 @@
                 </button>
                 <div class="deploy-section-content" id="resourceConfig">
                   <h3>算力资源池选择</h3>
-                  <div class="deploy-form-row">
-                    <label for="deployCluster"><span class="required">*</span> 选择集群</label>
-                    <select class="control mono" id="deployCluster" required>
-                      <option value="192.192.140.6">192.192.140.6 · 生产推理集群</option>
-                      <option value="192.192.140.18">192.192.140.18 · 在线服务集群</option>
-                      <option value="192.192.140.32">192.192.140.32 · 测试集群</option>
-                    </select>
+                  <div class="deploy-form-row deploy-runtime-row" role="radiogroup" aria-labelledby="deployRuntimeLabel">
+                    <span class="deploy-field-label" id="deployRuntimeLabel"><span class="required">*</span> 部署位置</span>
+                    <div class="deploy-runtime-segment">
+                      <label><input type="radio" name="deployRuntime" value="k8s" checked><span>K8s 集群</span></label>
+                      <label><input type="radio" name="deployRuntime" value="docker"><span>Docker 主机</span></label>
+                    </div>
+                    <select class="control mono deploy-target-select" id="deployCluster" required aria-label="部署目标"></select>
                   </div>
 
-                  <div class="deploy-gpu-panel">
-                    <div class="deploy-subtitle">显卡信息</div>
+                  <div class="deploy-capability-note hidden" id="deployCapabilityNote" role="note">
+                    <strong>Docker 主机部署说明</strong>
+                    <span>实例直接运行于主机 Docker，不经过 K8s 调度。不支持跨主机自动重调度，主机离线时实例不可用；不支持在线扩缩容，实例数在部署时确定。</span>
+                  </div>
+
+                  <div class="deploy-gpu-panel" id="deployGpuPanel">
+                    <div class="deploy-subtitle" id="deployGpuPanelTitle">显卡信息</div>
                     <div class="deploy-table-wrap">
                       <table class="deploy-resource-table">
-                        <thead><tr><th>序号</th><th>节点名</th><th>节点 IP</th><th>显卡名</th><th>可用</th><th>总数</th></tr></thead>
+                        <thead id="deployGpuTableHead"><tr><th>序号</th><th>节点名</th><th>节点 IP</th><th>显卡名</th><th>可用</th><th>总数</th></tr></thead>
                         <tbody id="deployGpuTableBody"></tbody>
                       </table>
                     </div>
                   </div>
 
-                  <div class="deploy-form-row">
+                  <div class="deploy-form-row" id="deployGpuRow">
                     <label for="deployGpu"><span class="required">*</span> 显卡型号</label>
                     <select class="control" id="deployGpu" required>
                       <option value="nvidia-l40s">NVIDIA L40S (48GB)</option>
@@ -112,7 +118,7 @@
                       <option value="nvidia-t4">NVIDIA T4 (16GB)</option>
                     </select>
                   </div>
-                  <div class="deploy-form-row deploy-radio-row" role="group" aria-labelledby="deployNodeModeLabel">
+                  <div class="deploy-form-row deploy-radio-row" role="group" aria-labelledby="deployNodeModeLabel" id="deployNodeModeRow">
                     <span class="deploy-field-label" id="deployNodeModeLabel"><span class="required">*</span> 节点指定</span>
                     <div class="deploy-radio-group deploy-node-mode">
                       <label><input type="radio" name="deployNodeMode" value="auto"><span>不指定（自动调度）</span></label>
@@ -129,11 +135,14 @@
                   </div>
                   <div class="deploy-form-row">
                     <label for="deployReplicas"><span class="required">*</span> 副本数</label>
-                    <div class="deploy-replica-control">
-                      <input class="control" id="deployReplicas" type="number" min="1" max="32" value="1" aria-label="副本数">
-                      <span>×</span>
-                      <input class="control" id="deployGpuPerReplica" type="number" min="1" max="8" value="1" aria-label="每副本 GPU 数">
-                      <span>GPUs</span>
+                    <div class="deploy-control-stack">
+                      <div class="deploy-replica-control">
+                        <input class="control" id="deployReplicas" type="number" min="1" max="32" value="1" aria-label="副本数">
+                        <span>×</span>
+                        <input class="control" id="deployGpuPerReplica" type="number" min="1" max="8" value="1" aria-label="每副本 GPU 数">
+                        <span>GPUs</span>
+                      </div>
+                      <p class="deploy-image-help hidden" id="deployReplicaLimit"></p>
                     </div>
                   </div>
                   <div class="deploy-form-row">
@@ -193,6 +202,21 @@
     ]
   };
 
+  const dockerHosts = {
+    '192.168.10.21': { name: '推理主机-01', gpu: 'NVIDIA A100 80GB', gpuId: 'nvidia-a100-80g', cards: [1,1,1,1,1,0,0,0], storage: 'ok' },
+    '192.168.10.22': { name: '推理主机-02', gpu: 'NVIDIA A100 80GB', gpuId: 'nvidia-a100-80g', cards: [1,1,1,0,0,0,0,0], storage: 'ok' },
+    '192.168.10.23': { name: '测试主机-03', gpu: 'NVIDIA L40S 48GB', gpuId: 'nvidia-l40s', cards: [0,0,0,0], storage: 'ok' }
+  };
+  const runtimeTargets = () => {
+    const docker = document.querySelector('input[name="deployRuntime"]:checked')?.value === 'docker';
+    if (docker) return Object.entries(dockerHosts).map(([ip, h]) => ({ value: ip, label: `${ip} · ${h.name}（${h.gpu} × ${h.cards.length}）`, disabled: h.storage === 'missing' }));
+    return [
+      { value: '192.192.140.6', label: '192.192.140.6 · 生产推理集群' },
+      { value: '192.192.140.18', label: '192.192.140.18 · 在线服务集群' },
+      { value: '192.192.140.32', label: '192.192.140.32 · 测试集群' }
+    ];
+  };
+
   function previousVersionFor(model, version) {
     const versions = { 'DeepSeek-R1': 'v0.9.5-beta', 'Qwen-72B': 'v2.0.0', 'Llama3-8B': 'v0.9.0' };
     return versions[model] || `${version}-previous`;
@@ -212,6 +236,7 @@
       serviceType: document.querySelector('input[name="deployServiceType"]:checked')?.value || 'offline',
       imageMode,
       image: imageMode === 'repository' ? document.getElementById('deployImageRepository').value : document.getElementById('deployImagePath').value.trim(),
+      runtime: document.querySelector('input[name="deployRuntime"]:checked')?.value || 'k8s',
       cluster: document.getElementById('deployCluster').value,
       gpu: document.getElementById('deployGpu').value,
       nodeMode: document.querySelector('input[name="deployNodeMode"]:checked')?.value || 'auto',
@@ -239,9 +264,11 @@
       `    version: ${yamlScalar(values.version)}`,
       `  image: ${yamlScalar(values.image)}`,
       '  placement:',
-      `    cluster: ${yamlScalar(values.cluster)}${nodeLine}`,
+      values.runtime === 'docker' ? `    runtime: docker` : `    cluster: ${yamlScalar(values.cluster)}`,
+      values.runtime === 'docker' ? `    host: ${yamlScalar(values.cluster)}` : '',
+      values.runtime === 'docker' ? `    devices: ${yamlScalar('auto')}` : nodeLine,
       '    accelerator:',
-      `      type: ${values.gpu}`,
+      `      type: ${values.runtime === 'docker' ? (dockerHosts[values.cluster]?.gpuId || values.gpu) : values.gpu}`,
       `      countPerReplica: ${values.gpuPerReplica}`,
       `  replicas: ${values.replicas}`,
       '  network:',
@@ -258,6 +285,31 @@
 
   function syncYaml() {
     document.getElementById('deployYaml').value = yamlFor(currentValues());
+  }
+
+  function isDocker() { return document.querySelector('input[name="deployRuntime"]:checked')?.value === 'docker'; }
+
+  function renderTargetOptions(preferred = '') {
+    const select = document.getElementById('deployCluster');
+    const targets = runtimeTargets();
+    select.innerHTML = targets.map(t => `<option value="${t.value}"${t.disabled ? ' disabled' : ''}>${t.label}</option>`).join('');
+    if (preferred && targets.some(t => t.value === preferred && !t.disabled)) select.value = preferred;
+    else if (targets.some(t => t.value === select.value && !t.disabled)) { /* keep */ }
+    else select.value = (targets.find(t => !t.disabled) || targets[0]).value;
+  }
+
+  function renderReplicaLimit() {
+    const host = dockerHosts[document.getElementById('deployCluster').value];
+    if (!host) return;
+    const free = host.cards.filter(v => !v).length;
+    const replicas = Number(document.getElementById('deployReplicas').value) || 1;
+    const per = Number(document.getElementById('deployGpuPerReplica').value) || 1;
+    const need = replicas * per;
+    const limit = document.getElementById('deployReplicaLimit');
+    limit.classList.remove('hidden');
+    if (need > free) { limit.className = 'deploy-field-error'; limit.textContent = `需要 ${need} 张卡，但该主机仅剩 ${free} 张空闲，请调整副本数或更换主机。`; return; }
+    limit.className = 'deploy-image-help';
+    limit.textContent = `Docker 主机单机容量：每副本 ${per} 卡时最多 ${Math.floor(host.cards.length / per)} 个实例（当前空闲卡可支持 ${Math.floor(free / per)} 个），加速卡由平台按顺序自动分配。`;
   }
 
   function renderNodeOptions(preferredNodeIp = '') {
@@ -281,6 +333,21 @@
     document.getElementById('deployGpuTableBody').innerHTML = nodes.map((node, index) => `<tr><td>${index + 1}</td><td>${node.name}</td><td class="mono">${node.ip}</td><td>${node.gpu}</td><td><strong class="resource-available">${node.available}</strong></td><td>${node.total}</td></tr>`).join('');
     if (syncGpu && nodes.length) document.getElementById('deployGpu').value = nodes[0].gpuId;
     renderNodeOptions(preferredNodeIp);
+  }
+
+  function applyRuntime(preferredTarget = '') {
+    const docker = isDocker();
+    document.getElementById('deployCapabilityNote').classList.toggle('hidden', !docker);
+    document.getElementById('deployGpuPanel').classList.toggle('hidden', docker);
+    document.getElementById('deployGpuRow').classList.toggle('hidden', docker);
+    document.getElementById('deployNodeModeRow').classList.toggle('hidden', docker);
+    if (docker) { document.querySelectorAll('input[name="deployNodeMode"]')[0].checked = true; }
+    document.getElementById('deployNodePanel').classList.add('hidden');
+    document.getElementById('deployNodeError').classList.add('hidden');
+    document.getElementById('deployReplicaLimit').classList.toggle('hidden', !docker);
+    renderTargetOptions(preferredTarget);
+    if (docker) renderReplicaLimit(); else renderClusterNodes(false, preferredTarget);
+    syncYaml();
   }
 
   function setNodeMode(mode, sync = true) {
@@ -324,6 +391,7 @@
       imageMode: button.dataset.deployImageMode || defaults.imageMode,
       imagePath: button.dataset.deployImagePath || defaults.imagePath,
       imageRepository: button.dataset.deployImageRepository || defaults.imageRepository,
+      runtime: button.dataset.deployRuntime || defaults.runtime,
       nodeMode: button.dataset.deployNodeMode || defaults.nodeMode,
       nodeIp: button.dataset.deployNodeIp || defaults.nodeIp,
       replicas: button.dataset.deployReplicas || defaults.replicas
@@ -345,17 +413,19 @@
     document.querySelectorAll('input[name="deployImageMode"]').forEach(radio => { radio.checked = radio.value === values.imageMode; });
     document.getElementById('deployImagePath').value = values.imagePath;
     document.getElementById('deployImageRepository').value = values.imageRepository;
-    document.getElementById('deployCluster').value = values.cluster;
+    document.querySelectorAll('input[name="deployRuntime"]').forEach(radio => { radio.checked = radio.value === (values.runtime || 'k8s'); });
     document.getElementById('deployGpu').value = values.gpu;
     document.querySelectorAll('input[name="deployNodeMode"]').forEach(radio => { radio.checked = radio.value === values.nodeMode; });
     document.getElementById('deployReplicas').value = values.replicas;
     document.getElementById('deployGpuPerReplica').value = values.gpuPerReplica;
     document.getElementById('deployPort').value = values.port;
     document.getElementById('deployRuntimeConfig').value = values.runtimeConfig;
-    renderClusterNodes(false, values.nodeIp);
+    applyRuntime(values.cluster);
     setNodeMode(values.nodeMode, false);
     setImageMode(values.imageMode, false);
     setPortMode(values.portMode);
+    document.getElementById('deployProgress')?.remove();
+    document.getElementById('deployModalTitle').textContent = isConfigure ? '配置服务实例' : '部署模型服务';
     document.getElementById('resourceConfig').classList.remove('hidden');
     document.getElementById('resourceToggle').setAttribute('aria-expanded', 'true');
     document.getElementById('deployAdvanced').classList.add('hidden');
@@ -379,6 +449,41 @@
     if (typeof window.showToast === 'function') window.showToast(title, message);
   }
 
+  function showDeployProgress(values, host, need) {
+    const el = document.createElement('div');
+    el.className = 'modal-backdrop hidden';
+    el.id = 'deployProgress';
+    const steps = [['pull', '拉取镜像', values.image], ['create', '创建容器', `${host.name} · ${need} 张卡 · 挂载 /data/yl`], ['health', '健康检查', '等待 /health 通过后接入网关']];
+    el.innerHTML = `<section class="modal modal-sm deploy-progress-modal" role="dialog" aria-modal="true" aria-labelledby="deployProgressTitle"><header class="modal-header"><div><h2 id="deployProgressTitle">正在部署到 Docker 主机</h2><p class="mono">${values.service} → ${values.cluster}</p></div></header><div class="modal-body"><ol class="deploy-steps">${steps.map(([k, t, d], i) => `<li class="deploy-step" data-step="${k}"><i></i><div><strong>${t}</strong><span>${d}</span></div><em></em></li>`).join('')}</ol><div class="deploy-progress-log" id="deployProgressLog"></div></div><footer class="modal-footer"><span class="muted" id="deployProgressHint">部署过程约 1–3 分钟，可关闭窗口，进度在服务列表中查看</span><div class="modal-actions"><button class="btn" id="deployProgressClose" type="button" disabled>关闭</button><a class="btn btn-primary hidden" id="deployProgressLink" href="sys_model_service.html">查看服务</a></div></footer></section>`;
+    document.body.appendChild(el);
+    document.getElementById('deployModal').classList.add('hidden');
+    el.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    const log = document.getElementById('deployProgressLog');
+    const lines = { pull: 'pulling image layers… 4/4 complete', create: 'container created, devices assigned, waiting for process start', health: 'GET /health → 200 OK (1.8s)' };
+    let i = 0;
+    const tick = () => {
+      const step = el.querySelector(`[data-step="${steps[i][0]}"]`);
+      step.classList.add('active');
+      log.textContent = lines[steps[i][0]];
+      setTimeout(() => {
+        step.classList.remove('active'); step.classList.add('done'); step.querySelector('em').textContent = '完成';
+        i += 1;
+        if (i < steps.length) tick();
+        else {
+          document.getElementById('deployProgressHint').textContent = '部署完成，实例已接入模型网关';
+          document.getElementById('deployProgressClose').disabled = false;
+          document.getElementById('deployProgressLink').classList.remove('hidden');
+          notify('服务部署完成', `${values.service} 已在 ${host.name} 上运行 ${values.replicas} 个实例。`);
+        }
+      }, 900);
+    };
+    setTimeout(tick, 200);
+    const closeProgress = () => { el.remove(); document.body.style.overflow = ''; };
+    document.getElementById('deployProgressClose').addEventListener('click', closeProgress);
+    el.addEventListener('click', e => { if (e.target === el && i >= steps.length) closeProgress(); });
+  }
+
   function toggleSection(button, content) {
     const expanded = content.classList.toggle('hidden') === false;
     button.setAttribute('aria-expanded', String(expanded));
@@ -396,13 +501,15 @@
   document.getElementById('deployAdvancedToggle').addEventListener('click', event => toggleSection(event.currentTarget, document.getElementById('deployAdvanced')));
   document.querySelectorAll('[data-port-mode]').forEach(button => button.addEventListener('click', () => setPortMode(button.dataset.portMode)));
   document.querySelectorAll('input[name="deployImageMode"]').forEach(radio => radio.addEventListener('change', () => setImageMode(radio.value)));
-  document.getElementById('deployCluster').addEventListener('change', () => { renderClusterNodes(true); document.getElementById('deployNodeError').classList.add('hidden'); syncYaml(); });
+  document.getElementById('deployCluster').addEventListener('change', () => { document.getElementById('deployNodeError').classList.add('hidden'); if (isDocker()) { renderReplicaLimit(); syncYaml(); } else { renderClusterNodes(true); syncYaml(); } });
+  document.querySelectorAll('input[name="deployRuntime"]').forEach(radio => radio.addEventListener('change', () => applyRuntime()));
   document.querySelectorAll('input[name="deployNodeMode"]').forEach(radio => radio.addEventListener('change', () => setNodeMode(radio.value)));
   document.getElementById('deployNodeIp').addEventListener('change', () => { document.getElementById('deployNodeError').classList.add('hidden'); syncYaml(); });
   ['deployServiceName', 'deployModelVersion', 'deployImagePath', 'deployImageRepository', 'deployGpu', 'deployReplicas', 'deployGpuPerReplica', 'deployPort', 'deployRuntimeConfig'].forEach(id => {
     const eventName = ['deployServiceName', 'deployImagePath', 'deployReplicas', 'deployGpuPerReplica', 'deployPort'].includes(id) ? 'input' : 'change';
     document.getElementById(id).addEventListener(eventName, () => {
       if (id === 'deployGpu') { renderNodeOptions(); document.getElementById('deployNodeError').classList.add('hidden'); }
+      if (isDocker() && (id === 'deployReplicas' || id === 'deployGpuPerReplica')) renderReplicaLimit();
       syncYaml();
     });
   });
@@ -415,6 +522,17 @@
     const imageInvalid = values.imageMode === 'path' && !values.image;
     document.getElementById('deployImagePathError').classList.toggle('hidden', !imageInvalid);
     if (imageInvalid) { document.getElementById('deployImagePath').focus(); return; }
+    if (values.runtime === 'docker') {
+      const host = dockerHosts[values.cluster];
+      if (!host) { document.getElementById('deployCluster').focus(); return; }
+      const free = host.cards.filter(v => !v).length;
+      const need = values.replicas * values.gpuPerReplica;
+      if (need > free) { renderReplicaLimit(); document.getElementById('deployReplicaLimit').scrollIntoView({ block: 'center' }); return; }
+      close();
+      if (currentMode === 'configure') { notify('服务配置已保存', `${values.service} 的配置已更新，重启实例后生效。`); return; }
+      showDeployProgress(values, host, need);
+      return;
+    }
     const nodeInvalid = values.nodeMode === 'specified' && !values.nodeIp;
     document.getElementById('deployNodeError').classList.toggle('hidden', !nodeInvalid);
     if (nodeInvalid) {

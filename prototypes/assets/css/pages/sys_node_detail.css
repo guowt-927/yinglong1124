@@ -5,3 +5,8 @@
 @media(max-width:1100px){.node-overview{grid-template-columns:repeat(3,1fr)}.node-identity{grid-column:1/-1;border-right:0;border-bottom:1px solid var(--border)}.node-stat:last-child{border-right:0}}
 @media(max-width:700px){.node-heading .overview-heading{align-items:flex-start;flex-direction:column}.node-heading .toolbar-actions{width:100%;justify-content:flex-start}.node-overview{grid-template-columns:1fr}.node-identity,.node-stat{min-height:78px;border-right:0;border-bottom:1px solid var(--border-soft)}.node-stat:last-child{border-bottom:0}.table-toolbar{align-items:flex-start;flex-direction:column}.search-wrap{width:100%}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* ---- 2026-11 Docker 主机详情 ---- */
+.node-overview.docker-mode{grid-template-columns:minmax(250px,1.35fr) repeat(3,minmax(150px,.65fr))}
+.tag-docker{background:#ecfeff;color:#0e7490;border-color:#a5f3fc}
+.node-tabs .node-tab.hidden{display:none}
+.success-text{color:var(--success)}
