@@ -33,12 +33,15 @@
 - 服务列表 `rowActionMarkup` 的静态 HTML 和 JS 模板要同步改，否则首屏和筛选后不一致
 - `model-management.css` 第 483 行是压缩单行，正则删规则容易留残片，删后要 grep 确认
 - `yinglong-v2.css` 的 `.full{grid-column:1/-1}` 只对 `.form-field` 生效；`.form-subgrid` 要整行需单独写 `.form-subgrid.full{grid-column:1/-1}`
-- 需求文档 `doc/需求文档-Docker主机纳管v0.1.md` 第 5 章已精简为「页面说明 / 核心业务逻辑 / 操作验证规则」，**不要再往里加字段表**；用 Python 整段替换 Markdown 时终点用文件末尾，不要 `index('## N.')`（找不到会抛异常导致整次写入失败）
-- 需求文档表格行被编辑器格式化过（对齐空格不一），精确匹配常失败 → 用 `startswith(编号前缀)` 逐行定位并断言唯一命中
+- 需求文档 `doc/需求文档-Docker主机纳管v0.2.md`（11-25 从 v0.1 改名；**用户明确允许不受格式限制、以完善为准**，v0.2 已含字段表 / 状态机 / 异常表 / 非功能 / 验收 / 待确认）；用 Python 整段替换 Markdown 时终点用文件末尾，不要 `index('## N.')`（找不到会抛异常导致整次写入失败）
+- 需求文档表格行被编辑器格式化过（对齐空格不一），精确匹配常失败 → 用 `startswith(编号前缀)` 逐行定位并断言唯一命中；§3 表格编号列有前导空格，正则要写 `^\|\s*(ID)\s*\|`
 - 往 Markdown 表格插数据行时**锚定分隔行 `| --------- |` 之后**，不要锚定表头（会把数据行插到表头与分隔行之间，表格直接损坏）
+- 校验 Markdown 时文件是 CRLF，必须 `split('\r\n')`；用 `split('\n')` 会留 `\r` 导致分隔行判定全假
 - `sys_infrastructure_mgmt.html` 的 Docker 脚本段函数全是**单行压缩**，多行精确匹配必失败（CRLF + 行尾）→ 用 `split('\r\n')` 后**按行号区间整段替换**，替换前对首尾行做 `startswith` 断言；HTML 区块用起止标记截取
 - `sys_infrastructure_mgmt.html` 的 `<section class="card cluster-overview">` K8s/Docker 各一个同结构，定位 Docker 面板要用其独有 id（`displayHostName`）限定范围
 
 ## 待办
 - `sys_model_monitor.html` 实例分布按运行环境分组
 - `doc/功能列表v0.2.md`、`doc/白皮书v0.2.md`（9.6 约束措辞）同步更新
+- 需求文档 v0.2 §9 的 8 条待确认事项（Q-01~Q-08）需产品/研发对齐后回填
+- 根目录 `修改.md` 是最早一版改动清单，多处已被后续收敛推翻（选卡网格、蓝绿更新、4 项预警等），**内容过时**，待用户决定是否更新或删除
