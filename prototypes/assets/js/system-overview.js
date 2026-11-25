@@ -121,7 +121,7 @@ function renderGpuTable() {
   $("#idleCount").textContent = data.total - data.used;
   $("#hotCount").textContent = data.hot;
   $("#gpuTableBody").innerHTML = rows.slice(0, 5).map((row, index) => `
-    <tr><td>${index + 1}</td><td>${row.id}</td><td>${row.node}</td><td><span class="runtime-pill ${row.runtime}">${row.runtime === "docker" ? "Docker" : "K8s"}</span></td><td>${row.instance}</td>
+    <tr><td>${index + 1}</td><td>${row.id}</td><td>${row.node}</td><td>${row.instance}</td>
       <td><span class="usage"><i><b style="width:${row.gpu}%"></b></i><span>${row.gpu}%</span></span></td>
       <td><span class="usage memory"><i><b style="width:${row.memory}%"></b></i><span>${row.memory}%</span></span></td><td>${row.power} W</td></tr>`).join("");
   $("#rowCount").textContent = `共 ${rows.length} 条记录 · 第 1 / ${Math.max(1, Math.ceil(rows.length / 5))} 页`;

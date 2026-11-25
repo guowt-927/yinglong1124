@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>主机详情 - 应龙大模型推理平台</title>
   <link rel="stylesheet" href="assets/css/yinglong-v2.css">
-  <link rel="stylesheet" href="assets/css/pages/sys_node_detail.css?v=20261124-docker-host-6">
+  <link rel="stylesheet" href="assets/css/pages/sys_node_detail.css?v=20261124-docker-host-7">
   <link rel="stylesheet" href="assets/css/theme.css">
   <script src="assets/js/theme.js"></script>
   <link rel="stylesheet" href="assets/css/prototype-v4.css?v=20260906-sidebar-version">
@@ -97,21 +97,13 @@
 
   <div class="toast hidden" id="toast" role="status" aria-live="polite"><svg class="icon"><use href="#i-check"/></svg><div><h3 id="toastTitle">操作成功</h3><p id="toastMessage"></p></div></div>
   <script>
-    const params=new URLSearchParams(location.search);
-    const isDocker=params.get('runtime')==='docker';
     let lastTrigger=null;
     function openModal(id){lastTrigger=document.activeElement;document.getElementById(id).classList.remove('hidden');document.body.style.overflow='hidden';requestAnimationFrame(()=>document.getElementById(id).querySelector('input,select,button')?.focus())}
     function closeModal(id){document.getElementById(id).classList.add('hidden');document.body.style.overflow='';if(lastTrigger)lastTrigger.focus()}
     function showToast(title,message,error=false){toastTitle.textContent=title;toastMessage.textContent=message;toast.classList.toggle('error',error);toast.classList.remove('hidden');clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>toast.classList.add('hidden'),3200)}
-    const dockerInstances=[
-      ['qwen3-32b-prod-01','svc-qwen3-32b-prod','running','192.168.10.21:8001','0, 1'],
-      ['deepseek-r1-docker','svc-deepseek-docker','running','192.168.10.21:8002','2, 3'],
-      ['rerank-bge','svc-rerank-bge','stopped','—','—']
-    ];
-    function renderDockerMode(){const host=params.get('host')||'h1';const name=host==='h2'?'推理主机-02':host==='h3'?'测试主机-03':'推理主机-01';const ip=params.get('ip')||'192.168.10.21';document.title='主机详情 - 应龙大模型推理平台';breadcrumbBack.textContent='集群与主机';breadcrumbBack.href='sys_infrastructure_mgmt.html#docker';breadcrumbCurrent.textContent='主机详情';nodeDetailTitle.textContent=name;nodeDescription.innerHTML=`<span class="mono">${ip}</span> · Docker 主机 · Docker 24.0.7`;nodeAccelerator.textContent='NVIDIA A100';nodeIdentityMeta.textContent='8 卡 · Docker 主机';backButton.innerHTML='<svg class="icon icon-sm"><use href="#i-arrow-left"/></svg>返回集群与主机';backButton.href='sys_infrastructure_mgmt.html#docker';document.querySelector('.node-overview').classList.add('docker-mode');document.getElementById('nodeGpuUtilization').id='hostGpuUtilization';document.querySelectorAll('#hostGpuUtilization .yl-v4-scope-badge').forEach(b=>b.remove());tabEvents.classList.add('hidden');instancesTitle.textContent='运行实例';instanceHead.innerHTML='<tr><th>实例名称</th><th>所属服务</th><th>状态</th><th>访问地址</th><th>占用卡</th></tr>';renderInstances()}
-    function renderInstances(){instanceBody.innerHTML=(isDocker?dockerInstances:[['pod-qwen-72b-wx92','svc-qwen-72b-prod','running'],['pod-qwen-72b-ab12','svc-qwen-72b-prod','running']]).map(r=>{const badge=r[2]==='running'?'<span class="badge badge-success">运行中</span>':'<span class="badge badge-neutral">已停止</span>';if(!isDocker)return `<tr><td class="mono cell-title">${r[0]}</td><td>${r[1]}</td><td>${badge}</td></tr>`;return `<tr><td class="mono cell-title">${r[0]}</td><td>${r[1]}</td><td>${badge}</td><td class="mono">${r[3]}</td><td class="mono">${r[4]}</td></tr>`}).join('');instanceCount.innerHTML=`共 <strong>${isDocker?dockerInstances.length:2}</strong> 项`}
+    function renderInstances(){instanceBody.innerHTML=[['pod-qwen-72b-wx92','svc-qwen-72b-prod','running'],['pod-qwen-72b-ab12','svc-qwen-72b-prod','running']].map(r=>{const badge=r[2]==='running'?'<span class="badge badge-success">运行中</span>':'<span class="badge badge-neutral">已停止</span>';return `<tr><td class="mono cell-title">${r[0]}</td><td>${r[1]}</td><td>${badge}</td></tr>`}).join('');instanceCount.innerHTML='共 <strong>2</strong> 项'}
     document.querySelectorAll('.modal-backdrop').forEach(x=>x.addEventListener('click',e=>{if(e.target===x)closeModal(x.id)}));document.addEventListener('keydown',e=>{if(e.key==='Escape'){const x=document.querySelector('.modal-backdrop:not(.hidden)');if(x)closeModal(x.id)}});
-    if(isDocker)renderDockerMode();else renderInstances();
+    renderInstances();
     const tabMap={instances:['tabInstances','panelInstances'],events:['tabEvents','panelEvents']};
     function switchTab(tab) {
       Object.entries(tabMap).forEach(([key,[tabId,panelId]])=>{const on=key===tab;const t=document.getElementById(tabId),p=document.getElementById(panelId);t.classList.toggle('active',on);t.setAttribute('aria-selected',String(on));p.classList.toggle('hidden',!on)});
