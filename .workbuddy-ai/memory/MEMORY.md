@@ -1,10 +1,10 @@
 # 应龙平台原型 - 项目记忆
 
-## 产品方向（2026-11 确定，11-25 三轮收敛后）
+## 产品方向（2026-11 确定，11-25 四轮收敛后）
 - 支持 K8s 集群 + Docker 主机**同时纳管**的混部形态；平台核心不感知运行时，统一 Runtime 接口 + K8s/Docker 适配器
 - yl-agent：Go 单二进制、systemd 托管、挂载 docker.sock、gRPC 主动外拨 + mTLS
 - **Docker 主机定位为「轻纳管」**：不做环境预检、不做 Agent 版本管理/升级、不做批量导入/升级、不暴露共享存储
-- **Docker 主机为「单主机模型」（11-25）**：Docker 运行环境只纳管 1 台主机，**无主机列表、无主机切换、无主机详情页**；面板仅一张概览卡（名称/IP/状态 + 加速卡 已用/总数 + 运行实例），不展示 CPU/内存/Agent；注册即替换；移除后空态 + 注册入口；有运行实例时阻止移除
+- **Docker 主机面板为「多主机 · 左列表 + 右概览」**（11-25 下午用户明确要求保留多主机，推翻上午的单主机方案）：左侧主机列表（名称/IP/卡数/状态点）点击切换，右侧概览卡仅 名称/IP/状态 + 加速卡 已用/总数 + 运行实例；**不展示 CPU/内存/Agent，无主机详情页**；注册为**追加**并自动选中；移除只删选中那台，有运行实例时阻止；全部移除后空态 + 注册入口
 - **Docker 服务生命周期极简**：启停/删除/编辑统一在服务列表操作（**运行中不可编辑**，仅停止后可编辑）；**不做蓝绿更新、不做在线扩缩容、不做跨主机重调度、不提供日志入口、不展示存量导入**
 - Docker 部署时加速卡由平台按顺序自动分配，**不提供选卡网格**；保留「实例上限提示」
 - 预警体系只覆盖 K8s 集群（节点异常 / SLA），**不含 Docker 主机类预警**
@@ -18,7 +18,7 @@
 - 纯 HTML + 原生 JS（内联 script），CSS 分三层：`yinglong-v2.css` / `prototype-v4.css` / `assets/css/pages/*.css`
 - 侧栏由 `prototype-v4.js` 注入；部署弹窗由 `model-deploy-modal.js` 动态渲染
 - **工作台页面是项目根目录 `index.html`**（`prototypes/index.html` 只是跳转壳）；工作台脚本在 `prototypes/assets/js/system-overview.js`
-- 静态资源引用带 `?v=` 版本号，**改 JS/CSS 后必须递增**（当前 infra 为 `-10`，node-detail 为 `-7`，service/deploy-modal 为 `-5`，model-mgmt 为 `-6`，overview 为 `-6`）
+- 静态资源引用带 `?v=` 版本号，**改 JS/CSS 后必须递增**（当前 infra 为 `-11`，node-detail 为 `-7`，service/deploy-modal 为 `-5`，model-mgmt 为 `-6`，overview 为 `-6`）
 - 行尾不统一：`sys_infrastructure_mgmt.html`、需求文档为 **CRLF**；根 `index.html`、`system-overview.js/.css` 为 **LF**。Python 写回前先统计 `\r\n` 数量再决定 `newline`
 
 ## 验证工具链
@@ -36,6 +36,7 @@
 - 需求文档 `doc/需求文档-Docker主机纳管v0.1.md` 第 5 章已精简为「页面说明 / 核心业务逻辑 / 操作验证规则」，**不要再往里加字段表**；用 Python 整段替换 Markdown 时终点用文件末尾，不要 `index('## N.')`（找不到会抛异常导致整次写入失败）
 - 需求文档表格行被编辑器格式化过（对齐空格不一），精确匹配常失败 → 用 `startswith(编号前缀)` 逐行定位并断言唯一命中
 - 往 Markdown 表格插数据行时**锚定分隔行 `| --------- |` 之后**，不要锚定表头（会把数据行插到表头与分隔行之间，表格直接损坏）
+- `sys_infrastructure_mgmt.html` 的 Docker 脚本段函数全是**单行压缩**，多行精确匹配必失败（CRLF + 行尾）→ 用 `split('\r\n')` 后**按行号区间整段替换**，替换前对首尾行做 `startswith` 断言；HTML 区块用起止标记截取
 - `sys_infrastructure_mgmt.html` 的 `<section class="card cluster-overview">` K8s/Docker 各一个同结构，定位 Docker 面板要用其独有 id（`displayHostName`）限定范围
 
 ## 待办

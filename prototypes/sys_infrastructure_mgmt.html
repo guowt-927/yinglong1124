@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>集群与主机 - 应龙大模型推理平台</title>
   <link rel="stylesheet" href="assets/css/yinglong-v2.css">
-  <link rel="stylesheet" href="assets/css/pages/sys_infrastructure_mgmt.css?v=20261124-docker-host-10">
+  <link rel="stylesheet" href="assets/css/pages/sys_infrastructure_mgmt.css?v=20261124-docker-host-11">
   <link rel="stylesheet" href="assets/css/theme.css">
   <script src="assets/js/theme.js"></script>
   <link rel="stylesheet" href="assets/css/prototype-v4.css?v=20260906-sidebar-version">
@@ -38,14 +38,19 @@
         </section>
       </div>
 
-      <div class="infrastructure-layout hidden" id="panelDocker" role="tabpanel" aria-labelledby="runtimeTabDocker">        <section class="cluster-content-panel">
+      <div class="infrastructure-layout hidden" id="panelDocker" role="tabpanel" aria-labelledby="runtimeTabDocker">
+        <aside class="card cluster-switch-panel" aria-label="Docker 主机列表"><header class="cluster-switch-header"><div><h2>Docker 主机</h2></div><button class="btn btn-icon btn-ghost" onclick="openHostModal('register')" aria-label="注册 Docker 主机"><svg class="icon"><use href="#i-plus"/></svg></button></header><div class="cluster-switch-list" id="hostSwitchList"></div></aside>
+        <section class="cluster-content-panel">
           <section class="card cluster-overview" id="hostOverview">
-<div id="hostOverviewBody">
-<header class="cluster-overview-head">
-<div>
-<div class="cluster-title-line">
-<h2 id="displayHostName">—</h2><span class="tag tag-docker" id="displayHostRuntime">Docker</span><span class="badge" id="displayHostStatus">—</span></div><p class="host-subline" id="displayHostSubline">—</p></div><div class="cluster-actions"><button class="btn btn-danger" onclick="openHostModal('remove')">移除主机</button></div></header><div class="cluster-metrics"><article><small>加速卡</small><strong id="statHostGpu">—</strong><span id="statHostGpuHint">已用 / 总数</span></article><article><small>运行实例</small><strong id="statHostInstances">—</strong><span id="statHostInstancesHint">平台部署</span></article></div></div><div class="host-overview-empty hidden" id="hostOverviewEmpty"><p>尚未注册 Docker 主机。注册后平台将通过 SSH 安装 Agent 并纳管主机，不改动现有容器与 Docker 配置。</p><button class="btn btn-primary" onclick="openHostModal('register')"><svg class="icon"><use href="#i-plus"/></svg>注册 Docker 主机</button></div></section>        </section>
+            <div id="hostOverviewBody">
+              <header class="cluster-overview-head"><div><div class="cluster-title-line"><h2 id="displayHostName">—</h2><span class="tag tag-docker" id="displayHostRuntime">Docker</span><span class="badge" id="displayHostStatus">—</span></div><p class="host-subline" id="displayHostSubline">—</p></div><div class="cluster-actions"><button class="btn btn-danger" onclick="openHostModal('remove')">移除主机</button></div></header>
+              <div class="cluster-metrics"><article><small>加速卡</small><strong id="statHostGpu">—</strong><span id="statHostGpuHint">已用 / 总数</span></article><article><small>运行实例</small><strong id="statHostInstances">—</strong><span id="statHostInstancesHint">平台部署</span></article></div>
+            </div>
+            <div class="host-overview-empty hidden" id="hostOverviewEmpty"><p>尚未注册 Docker 主机。注册后平台将通过 SSH 安装 Agent 并纳管主机，不改动现有容器与 Docker 配置。</p><button class="btn btn-primary" onclick="openHostModal('register')"><svg class="icon"><use href="#i-plus"/></svg>注册 Docker 主机</button></div>
+          </section>
+        </section>
       </div>
+
     </main>
   </div>
   <div class="modal-backdrop hidden" id="newClusterModal" role="dialog" aria-modal="true" aria-labelledby="newClusterTitle"><section class="modal modal-sm"><header class="modal-header"><div><h2 id="newClusterTitle">新建集群</h2></div><button class="btn btn-icon btn-ghost" onclick="closeModal('newClusterModal')" aria-label="关闭注册弹窗"><svg class="icon"><use href="#i-x"/></svg></button></header><div class="modal-body"><div class="registration-tabs" role="tablist"><button class="active" id="tabAccount" onclick="switchClusterTab('account')">账号密码注册</button><button id="tabConfig" onclick="switchClusterTab('config')">配置文件注册</button></div><div class="form-grid registration-form"><div class="form-field full"><label for="clusterName">集群名称 <span class="required">*</span></label><input class="control" id="clusterName" placeholder="例如：Production-Cluster-C"></div><div class="form-field full"><label for="masterIp">Master 节点 IP <span class="required">*</span></label><input class="control mono" id="masterIp" placeholder="192.168.x.x"></div><div id="formAccount" class="form-subgrid full"><div class="form-field"><label for="sshAccount">SSH 账号</label><input class="control" id="sshAccount" placeholder="root"></div><div class="form-field"><label for="sshPassword">SSH 密码</label><input class="control" id="sshPassword" type="password"></div></div><div id="formConfig" class="form-field full hidden"><label>KubeConfig 配置文件</label><button class="upload-zone" onclick="document.getElementById('kubeFile').click()"><svg class="icon icon-lg"><use href="#i-upload"/></svg><strong>选择 KubeConfig 文件</strong><span>支持 YAML，最大 2 MB</span></button><input class="hidden" id="kubeFile" type="file" accept=".yaml,.yml"></div><p class="field-error full hidden" id="clusterError">请填写集群名称和 Master 节点 IP。</p></div></div><footer class="modal-footer"><span class="muted" id="registerFooterHint">注册过程预计需要 1–3 分钟</span><div class="modal-actions"><button class="btn" onclick="closeModal('newClusterModal')">取消</button><button class="btn btn-primary" id="registerSubmitButton" onclick="submitRegistration()">开始注册</button></div></footer></section></div>
@@ -68,24 +73,29 @@
     function removeCluster(){if(removeConfirm.value.trim()!==clusterData[currentCluster].label){showToast('名称不匹配','请输入完整集群名称后再确认。',true);removeConfirm.focus();return}closeModal('removeClusterModal');showToast('集群已移除',clusterData[currentCluster].label+' 已停止接受新任务。')}
 
     const hostStatusMap={online:['badge-success','在线'],offline:['badge-danger','离线'],installing:['badge-neutral','安装中']};
-    // 单主机模型：Docker 运行环境只纳管 1 台主机；hostData 为空表示尚未注册
+    // Docker 主机列表：支持多台主机，左侧列表切换，右侧展示所选主机概览；hostData 为空表示尚未注册
     const hostData=[
-      {id:'h1',name:'推理主机-01',ip:'192.168.10.21',status:'online',heartbeat:'8 秒前',gpu:'NVIDIA A100',gpuTotal:8,gpuUsed:5,instances:5,tag:'推理'}
+      {id:'h1',name:'推理主机-01',ip:'192.168.10.21',status:'online',heartbeat:'8 秒前',gpu:'NVIDIA A100',gpuTotal:8,gpuUsed:5,instances:5,tag:'推理'},
+      {id:'h2',name:'推理主机-02',ip:'192.168.10.22',status:'online',heartbeat:'12 秒前',gpu:'昇腾 910B',gpuTotal:8,gpuUsed:3,instances:3,tag:'推理'},
+      {id:'h3',name:'测试主机-03',ip:'192.168.10.23',status:'offline',heartbeat:'12 分钟前',gpu:'NVIDIA L40S',gpuTotal:4,gpuUsed:0,instances:0,tag:'测试'}
     ];
-    let currentRuntime='k8s',hostTrigger=null;
-    function getHost(){return hostData[0]||null}
-    function switchRuntime(runtime){currentRuntime=runtime;const isDocker=runtime==='docker';runtimeTabK8s.classList.toggle('active',!isDocker);runtimeTabDocker.classList.toggle('active',isDocker);runtimeTabK8s.setAttribute('aria-selected',String(!isDocker));runtimeTabDocker.setAttribute('aria-selected',String(isDocker));panelK8s.classList.toggle('hidden',isDocker);panelDocker.classList.toggle('hidden',!isDocker);registerButtonLabel.textContent=isDocker?'注册主机':'新建集群';if(isDocker){if(location.hash!=='#docker')history.replaceState(null,'','#docker');renderHostOverview()}else{if(location.hash)history.replaceState(null,'',location.pathname+location.search)}}
-    function renderHostOverview(){const h=getHost();const empty=!h;hostOverviewBody.classList.toggle('hidden',empty);hostOverviewEmpty.classList.toggle('hidden',!empty);dockerCount.textContent=String(hostData.length);if(empty){displayHostName.textContent='暂无已纳管的 Docker 主机';return}const st=hostStatusMap[h.status];displayHostName.textContent=h.name+' ('+h.ip+')';displayHostStatus.className='badge '+st[0];displayHostStatus.textContent=st[1];displayHostSubline.textContent=`Docker 主机 · ${h.gpu} × ${h.gpuTotal} · 标签：${h.tag} · 最后心跳 ${h.heartbeat}`;statHostGpu.textContent=`${h.gpuUsed} / ${h.gpuTotal}`;statHostInstances.textContent=String(h.instances);statHostInstancesHint.textContent='平台部署'}
-        function refreshCurrentView(){if(currentRuntime==='docker'){renderHostOverview();showToast('已刷新','已获取最新主机状态与 Agent 心跳。')}else{renderNodes();showToast('列表已刷新','已获取最新节点状态。')}}
-    function addHost(ip,name,status){hostData.length=0;hostData.push({id:'h1',name,ip,status,heartbeat:'—',gpu:'检测中',gpuTotal:0,gpuUsed:0,instances:0,tag:'推理'});renderHostOverview()}
-    function finalizeHost(ip){const h=hostData.find(x=>x.ip===ip);if(!h)return;Object.assign(h,{status:'online',heartbeat:'刚刚',gpu:'NVIDIA A100',gpuTotal:8,gpuUsed:0});renderHostOverview()}
+    let currentHostId='h1',currentRuntime='k8s',hostTrigger=null;
+    function getHost(){return hostData.find(h=>h.id===currentHostId)||hostData[0]||null}
+    function switchRuntime(runtime){currentRuntime=runtime;const isDocker=runtime==='docker';runtimeTabK8s.classList.toggle('active',!isDocker);runtimeTabDocker.classList.toggle('active',isDocker);runtimeTabK8s.setAttribute('aria-selected',String(!isDocker));runtimeTabDocker.setAttribute('aria-selected',String(isDocker));panelK8s.classList.toggle('hidden',isDocker);panelDocker.classList.toggle('hidden',!isDocker);registerButtonLabel.textContent=isDocker?'注册主机':'新建集群';if(isDocker){if(location.hash!=='#docker')history.replaceState(null,'','#docker');renderHostSwitch();renderHostOverview()}else{if(location.hash)history.replaceState(null,'',location.pathname+location.search)}}
+    function renderHostOverview(){const h=getHost();const empty=!h;hostOverviewBody.classList.toggle('hidden',empty);hostOverviewEmpty.classList.toggle('hidden',!empty);if(empty){return}const st=hostStatusMap[h.status];displayHostName.textContent=h.name+' ('+h.ip+')';displayHostStatus.className='badge '+st[0];displayHostStatus.textContent=st[1];displayHostSubline.textContent=`Docker 主机 · ${h.gpu} × ${h.gpuTotal} · 标签：${h.tag} · 最后心跳 ${h.heartbeat}`;statHostGpu.textContent=`${h.gpuUsed} / ${h.gpuTotal}`;statHostInstances.textContent=String(h.instances);statHostInstancesHint.textContent='平台部署'}
+    function renderHostSwitch(){hostSwitchList.innerHTML=hostData.map(h=>`<button class="cluster-card host-card ${h.id===currentHostId?'active':''}" id="hostcard-${h.id}" onclick="selectHost('${h.id}')"><span class="cluster-status-dot ${h.status==='online'?'success':h.status==='offline'?'danger':'warning'}"></span><span><strong>${h.name}</strong><small>${h.ip} · ${h.gpuTotal} 卡</small></span></button>`).join('')}
+    function selectHost(id){currentHostId=id;hostTrigger=null;renderHostSwitch();renderHostOverview()}
+    function syncHostCount(){dockerCount.textContent=String(hostData.length)}
+        function refreshCurrentView(){if(currentRuntime==='docker'){renderHostSwitch();renderHostOverview();showToast('列表已刷新','已获取最新主机状态与 Agent 心跳。')}else{renderNodes();showToast('列表已刷新','已获取最新节点状态。')}}
+    function addHost(ip,name,status){const id='h'+Date.now();hostData.push({id,name,ip,status,heartbeat:'—',gpu:'检测中',gpuTotal:0,gpuUsed:0,instances:0,tag:'推理'});currentHostId=id;syncHostCount();renderHostSwitch();renderHostOverview()}
+    function finalizeHost(ip){const h=hostData.find(x=>x.ip===ip);if(!h)return;Object.assign(h,{status:'online',heartbeat:'刚刚',gpu:'NVIDIA A100',gpuTotal:8,gpuUsed:0});renderHostSwitch();renderHostOverview()}
     function openHostModal(mode){hostTrigger=document.activeElement;const h=getHost();if(mode==='register'){hostRegError.classList.add('hidden');hostRegSubmit.disabled=false;hostRegModalOpen();return}if(mode==='remove'){removeHostName.textContent=h.name+' ('+h.ip+')';removeHostWarning.textContent=h.instances?'该主机仍有 '+h.instances+' 个运行实例，需先停止或迁移后才能移除。':'移除后主机不再接受新部署。';openModal('removeHostModal');return}if(mode==='progress'){return}}
     function hostRegModalOpen(){hostRegIp.value='';hostRegAlias.value='';hostRegPort.value='22';hostRegUser.value='root';hostRegPassword.value='';openModal('hostRegisterModal')}
     function submitHostRegister(){const ip=hostRegIp.value.trim();const valid=/^(\d{1,3}\.){3}\d{1,3}$/.test(ip);hostRegError.classList.toggle('hidden',valid);if(!valid){hostRegIp.focus();return}const name=hostRegAlias.value.trim()||('docker-host-'+ip.split('.').pop());hostRegSubmit.disabled=true;addHost(ip,name,'installing');setTimeout(()=>{finalizeHost(ip);closeModal('hostRegisterModal');hostRegSubmit.disabled=false;showToast('主机注册完成',name+'（'+ip+'）Agent 已上线，可承接部署。')},1500)}
-    function removeHost(){const h=getHost();if(h&&h.instances){showToast('无法移除','该主机仍有运行中的实例，请先停止或迁移。',true);return}const name=h?h.name:'';hostData.length=0;closeModal('removeHostModal');renderHostOverview();showToast('主机已移除',name+' 已从平台移除，可重新注册 Docker 主机。')}
+    function removeHost(){const h=getHost();if(!h)return;if(h.instances){showToast('无法移除','该主机仍有运行中的实例，请先停止或迁移。',true);return}const idx=hostData.indexOf(h);hostData.splice(idx,1);currentHostId=hostData[0]?.id||'';closeModal('removeHostModal');syncHostCount();renderHostSwitch();renderHostOverview();showToast('主机已移除',h.name+' 已从平台移除，不再接受新部署。')}
     function showToast(title,message,error=false){toastTitle.textContent=title;toastMessage.textContent=message;toast.classList.toggle('error',error);toast.classList.remove('hidden');clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>toast.classList.add('hidden'),3200)}
     document.querySelectorAll('.modal-backdrop').forEach(x=>x.addEventListener('click',e=>{if(e.target===x)closeModal(x.id)}));document.addEventListener('keydown',e=>{if(e.key==='Escape'){const x=document.querySelector('.modal-backdrop:not(.hidden)');if(x)closeModal(x.id)}});
-    selectCluster(new URLSearchParams(location.search).get('cluster')||'prod');k8sCount.textContent=Object.keys(clusterData).length;renderHostOverview();switchRuntime(location.hash==='#docker'?'docker':'k8s');
+    selectCluster(new URLSearchParams(location.search).get('cluster')||'prod');k8sCount.textContent=Object.keys(clusterData).length;syncHostCount();renderHostSwitch();renderHostOverview();switchRuntime(location.hash==='#docker'?'docker':'k8s');
   </script>
 </body>
 </html>
